@@ -3,9 +3,11 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 LED_val = ["Bright", "Dim", "Off"]
-Style_val = ["NA", "NA", "NA", "Movie", "NA", "NA", "NA", "NA", "NA", "NA", "Standard", "NA", "Game"]
-Input_val = ["NA", "NA", "NA", "NA", "NA", "Bluetooth", "NA", "TV", "NA", "NA", "Optical", "NA", "Analog"]
-
+#Style_val = ["NA", "NA", "NA", "Movie", "NA", "NA", "NA", "NA", "NA", "NA", "Standard", "NA", "Game"]
+#Input_val = ["NA", "NA", "NA", "NA", "NA", "Bluetooth", "NA", "TV", "NA", "NA", "Optical", "NA", "Analog"]
+Subwoofer = {0:-4,4:-3,8:-2,12:-1,16:0,20:1,24:2,28:3,32:4}
+Style_val = {3:"Movie",10:"Standard",12:"Game"}
+Input_val={5:"Bluetooth",7:"TV",10:"Optical",12:"Analog"}
 
 def create_command_code(command, device=False):
     if len(command) == 1: #single action type
@@ -160,8 +162,8 @@ def set_by_hex(data, device):
     volume = (data >> 72) & 0xff
     device._volume = (volume * 1.666) / 100
     device._sound_mode = Style_val[(data >> 24) & 0xff]
-    #self.clear_voice = bool((data >> 18) & 1)
-    #self.bass = bool((data >> 21) & 1)
-    #self.leds = (data >> 8) & 0x3
-    #self.leds_name = self.LED_val[self.leds]
+    device._attr_extra_state_attributes['is_clear_voice'] =  bool((data >> 18) & 1)
+    device._attr_extra_state_attributes['is_bass_extension'] =  bool((data >> 21) & 1)
+    device._attr_extra_state_attributes['subwoofer'] =  Subwoofer[(data >> 64) & 0xff]
+    device._attr_extra_state_attributes['leds'] =  LED_val[(data >> 8) & 0x3]
     return device

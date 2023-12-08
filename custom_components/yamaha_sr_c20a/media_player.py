@@ -7,7 +7,8 @@ import logging
 import voluptuous as vol
 import homeassistant.util as util
 from datetime import timedelta
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, entity_platform, service
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .ble_connect import BleData
 
@@ -23,7 +24,7 @@ from homeassistant.components.media_player import (
 
 
 VERSION = '0.1.0'
-DOMAIN = "yamaha_sr_c20a"
+#DOMAIN = "yamaha_sr_c20a"
 
 from homeassistant.const import (
   CONF_NAME,
@@ -46,7 +47,7 @@ DEVICE_SOURCE_MODE = [
 ]
 
 DEFAULT_NAME = 'Yamaha SR-C20A'
-SCAN_INTERVAL = timedelta(seconds=5)
+SCAN_INTERVAL = timedelta(seconds=120)
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=3)
 MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(seconds=3)
 
@@ -72,6 +73,8 @@ class YamahaDevice(MediaPlayerEntity):
   _attr_device_class = MediaPlayerDeviceClass.SPEAKER
   _attr_has_entity_name = True
   _attr_name = None
+  _attr_is_clear_voice = None
+  _attr_is_bass_extension = None
 
 
   def __init__(self, name, hass, macAdress, pollingAuto = False):
@@ -87,6 +90,13 @@ class YamahaDevice(MediaPlayerEntity):
     self._sound_mode = None
     self._muted = False
     self._pollingAuto = pollingAuto
+    self._is_clear_voice = False
+    self._attr_extra_state_attributes = {
+          "is_clear_voice": None,
+          "is_bass_extension": None,
+          "subwoofer": None,
+          "leds": None
+        }
 
   @property
   def name(self):
@@ -199,12 +209,56 @@ class YamahaDevice(MediaPlayerEntity):
     self._state = STATE_ON
     ble_connect = BleData(self, self.hass, self._macAdress)
     await ble_connect.callDevice(["powerOn"])
+
+  async def async_toggle_clear_voice(self):
+    """Sets clearVoice to true."""
+    ble_connect = BleData(self, self.hass, self._macAdress)
+    _LOGGER.warning("ClearVoice")
+    if device._attr_extra_state_attributes['is_clear_voice'] == False:
+      await ble_connect.callDevice(["clearVoiceOn"])
+      _LOGGER.warning("ClearVoice On")
+    else:
+      await ble_connect.callDevice(["clearVoiceOff"])
+      _LOGGER.warning("ClearVoice Off")
+
+  async def async_toggle_bass_extension(self):
+    """Sets Bass extension to true."""
+    ble_connect = BleData(self, self.hass, self._macAdress)
+    if device._attr_extra_state_attributes['is_bass_extension'] == False:
+      await ble_connect.callDevice(["bassOn"])
+    else:
+      await ble_connect.callDevice(["bassOff"])
+
+
+  async def async_bass_up(self):
+    """increase bass."""
+    ble_connect = BleData(self, self.hass, self._macAdress)
+    await ble_connect.callDevice(["subUp"])
+
+  async def async_bass_down(self):
+    """Decrease Bass."""
+    ble_connect = BleData(self, self.hass, self._macAdress)
+    await ble_connect.callDevice(["subDown"])   
+
+  async def async_led_off(self):
+    """Led Off."""
+    ble_connect = BleData(self, self.hass, self._macAdress)
+    await ble_connect.callDevice(["ledOff"])    
+
+  async def async_led_dim(self):
+    """Led Dim."""
+    ble_connect = BleData(self, self.hass, self._macAdress)
+    await ble_connect.callDevice(["ledDim"])  
+
+  async def async_led_bright(self):
+    """Led Bright."""
+    ble_connect = BleData(self, self.hass, self._macAdress)
+    await ble_connect.callDevice(["ledBright"])  
     
 
   #@util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_FORCED_SCANS)
   async def async_update(self):
     """Update the media player State."""
-    _LOGGER.warning("Polling Auto " + str(self._pollingAuto))
     if self._status == 'unint' or self._pollingAuto == True : 
       ble_connect = BleData(self, self.hass, self._macAdress)
       await ble_connect.callDevice()
@@ -214,10 +268,54 @@ class YamahaDevice(MediaPlayerEntity):
         else :
           self._state = STATE_OFF 
 
+
 def setup_platform(hass, config, add_devices, discovery_info=None):
-  """Set up the Samsung MultiRoom platform."""
   macAdress = config.get('mac_adress')
   pollingAuto = config.get('polling_auto')
+  scan_interval = config.get('scan_interval')
   name = config.get(CONF_NAME)
   session = async_get_clientsession(hass)
   add_devices([YamahaDevice(name, hass, macAdress, pollingAuto)])
+
+  platform = entity_platform.EntityPlatform(hass=hass, logger=_LOGGER, domain="mediaplayer", platform_name="yamaha_sr_c20a", platform=None, scan_interval=scan_interval, entity_namespace="mediaplayer")
+  platform.async_register_entity_service(
+    "async_toggle_clear_voice",
+    {},
+    "async_toggle_clear_voice",
+  )
+
+  platform.async_register_entity_service(
+    "async_toggle_bass_extension",
+    {},
+    "async_toggle_bass_extension",
+  )
+
+  platform.async_register_entity_service(
+    "async_bass_up",
+    {},
+    "async_bass_up",
+  )
+
+  platform.async_register_entity_service(
+    "async_bass_down",
+    {},
+    "async_bass_down",
+  )
+
+  platform.async_register_entity_service(
+    "async_led_off",
+    {},
+    "async_led_off",
+  )
+
+  platform.async_register_entity_service(
+    "async_led_dim",
+    {},
+    "async_led_dim",
+  )
+
+  platform.async_register_entity_service(
+    "async_led_bright",
+    {},
+    "async_led_bright",
+  )

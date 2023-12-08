@@ -1,0 +1,35 @@
+toggle_clear_voice:
+  target:
+    entity:
+      domain: media_player
+      integration: yamaha_sr_c20a
+toggle_bass_extension:
+  target:
+    entity:
+      domain: media_player
+      integration: yamaha_sr_c20a
+bass_up:
+  target:
+    entity:
+      domain: media_player
+      integration: yamaha_sr_c20a
+bass_down:
+  target:
+    entity:
+      domain: media_player
+      integration: yamaha_sr_c20a
+led_off:
+  target:
+    entity:
+      domain: media_player
+      integration: yamaha_sr_c20a
+led_dim:
+  target:
+    entity:
+      domain: media_player
+      integration: yamaha_sr_c20a
+led_bright:
+  target:
+    entity:
+      domain: media_player
+      integration: yamaha_sr_c20a        

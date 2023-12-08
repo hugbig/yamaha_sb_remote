@@ -51,11 +51,12 @@ class BleData:
             await adapter.start_notify('5cafe9de-e7b0-4e0b-8fb9-2da91a7ae3ed', self.handle_data)
             await adapter.write_gatt_char("0c50e7fa-594c-408b-ae0d-b53b884b7c08",request)  
             while self.device._status == 'unint' :
-                _LOGGER.warning("WAIT FOR notify handle : " + self.device._status)
+                _LOGGER.debug("WAIT FOR notify handle : " + self.device._status)
                 await asyncio.sleep(0.06)
             if command == None :
                 return
             else: 
+                _LOGGER.warning("COMMAND " + command[0])
                 code = create_command_code(command, self.device)
                 await adapter.write_gatt_char("0c50e7fa-594c-408b-ae0d-b53b884b7c08",code)
                 await asyncio.sleep(0.1)
