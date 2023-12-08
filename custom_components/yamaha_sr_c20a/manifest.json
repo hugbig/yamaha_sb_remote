@@ -1,0 +1,15 @@
+{
+    "domain": "yamaha_sr_c20a",
+    "name": "yamaha_sr_c20a",
+    "config_flow": false,
+    "codeowners": ["hbigot"],
+    "dependencies": ["bluetooth_adapters"],
+    "iot_class": "local_polling",
+    "loggers": [
+      "yamaha_sr_c20a"
+    ],
+    "documentation": "",
+    "requirements": [],
+    "version": "0.1.0"
+  }
+  
