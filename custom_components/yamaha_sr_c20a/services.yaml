@@ -1,35 +1,51 @@
 toggle_clear_voice:
+  name: Toggle Clear voice
+  description: Toggle clear voice option.
   target:
     entity:
-      domain: media_player
       integration: yamaha_sr_c20a
 toggle_bass_extension:
+  name: Toggle Bass extension
+  description: Toggle bass extension option.
   target:
     entity:
-      domain: media_player
       integration: yamaha_sr_c20a
 bass_up:
+  name: Increase bass
+  description: Increase bass.
   target:
     entity:
-      domain: media_player
       integration: yamaha_sr_c20a
 bass_down:
+  name: Decrease bass
+  description: Decrease bass.
   target:
     entity:
-      domain: media_player
       integration: yamaha_sr_c20a
 led_off:
+  name: Set led mode to Off
+  description: Mode Led Off.
   target:
     entity:
       domain: media_player
       integration: yamaha_sr_c20a
 led_dim:
+  name: Set led mode to Dim
+  description: Mode Led Dim.
   target:
     entity:
       domain: media_player
       integration: yamaha_sr_c20a
 led_bright:
+  name: Set led mode to Bright
+  description: Mode Led Bright.
   target:
     entity:
       domain: media_player
-      integration: yamaha_sr_c20a        
+      integration: yamaha_sr_c20a
+synchronize:
+  name: Force polling data
+  description: Force synchronisation between Home assistant and the speaker.
+  target:
+    entity:
+      integration: yamaha_sr_c20a

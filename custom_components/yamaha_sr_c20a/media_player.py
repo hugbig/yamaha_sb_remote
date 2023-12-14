@@ -24,13 +24,14 @@ from homeassistant.components.media_player import (
 
 
 VERSION = '0.1.0'
-#DOMAIN = "yamaha_sr_c20a"
+DOMAIN = "yamaha_sr_c20a"
 
 from homeassistant.const import (
   CONF_NAME,
   STATE_ON,
   STATE_OFF,
-  CONF_SCAN_INTERVAL
+  CONF_SCAN_INTERVAL,
+  ATTR_ENTITY_ID
 )
 
 DEVICE_SOURCE_TYPE = [
@@ -214,7 +215,7 @@ class YamahaDevice(MediaPlayerEntity):
     """Sets clearVoice to true."""
     ble_connect = BleData(self, self.hass, self._macAdress)
     _LOGGER.warning("ClearVoice")
-    if device._attr_extra_state_attributes['is_clear_voice'] == False:
+    if self._attr_extra_state_attributes['is_clear_voice'] == False:
       await ble_connect.callDevice(["clearVoiceOn"])
       _LOGGER.warning("ClearVoice On")
     else:
@@ -224,7 +225,7 @@ class YamahaDevice(MediaPlayerEntity):
   async def async_toggle_bass_extension(self):
     """Sets Bass extension to true."""
     ble_connect = BleData(self, self.hass, self._macAdress)
-    if device._attr_extra_state_attributes['is_bass_extension'] == False:
+    if self._attr_extra_state_attributes['is_bass_extension'] == False:
       await ble_connect.callDevice(["bassOn"])
     else:
       await ble_connect.callDevice(["bassOff"])
@@ -254,6 +255,11 @@ class YamahaDevice(MediaPlayerEntity):
     """Led Bright."""
     ble_connect = BleData(self, self.hass, self._macAdress)
     await ble_connect.callDevice(["ledBright"])  
+
+  async def async_synchronize(self):
+    """Led Bright."""
+    ble_connect = BleData(self, self.hass, self._macAdress)
+    await ble_connect.callDevice()  
     
 
   #@util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_FORCED_SCANS)
@@ -318,4 +324,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     "async_led_bright",
     {},
     "async_led_bright",
+  )
+
+  platform.async_register_entity_service(
+    "async_synchronize",
+    {vol.Required(ATTR_ENTITY_ID): cv.entity_id},
+    "async_synchronize",
   )
