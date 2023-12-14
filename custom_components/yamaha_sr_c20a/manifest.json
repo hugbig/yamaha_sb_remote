@@ -1,14 +1,14 @@
 {
     "domain": "yamaha_sr_c20a",
     "name": "yamaha_sr_c20a",
-    "config_flow": false,
     "codeowners": ["@hbigot"],
+    "config_flow": false,
     "dependencies": ["bluetooth_adapters"],
+    "documentation": "https://github.com/hugbig/yamaha_sr_c20a",
     "iot_class": "local_polling",
     "loggers": [
       "yamaha_sr_c20a"
     ],
-    "documentation": "https://github.com/hugbig/yamaha_sr_c20a",
     "requirements": [],
     "version": "0.1.0"
   }
