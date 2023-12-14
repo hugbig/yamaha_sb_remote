@@ -6,6 +6,7 @@
     "dependencies": ["bluetooth_adapters"],
     "documentation": "https://github.com/hugbig/yamaha_sr_c20a",
     "iot_class": "local_polling",
+    "issue_tracker": "https://github.com/hugbig/yamaha_sr_c20a/issues",
     "loggers": [
       "yamaha_sr_c20a"
     ],
