@@ -56,7 +56,7 @@ class BleData:
             if command == None :
                 return
             else: 
-                _LOGGER.warning("COMMAND " + command[0])
+                _LOGGER.debug("COMMAND " + command[0])
                 code = create_command_code(command, self.device)
                 await adapter.write_gatt_char("0c50e7fa-594c-408b-ae0d-b53b884b7c08",code)
                 await asyncio.sleep(0.1)
