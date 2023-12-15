@@ -3,8 +3,6 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 LED_val = ["Bright", "Dim", "Off"]
-#Style_val = ["NA", "NA", "NA", "Movie", "NA", "NA", "NA", "NA", "NA", "NA", "Standard", "NA", "Game"]
-#Input_val = ["NA", "NA", "NA", "NA", "NA", "Bluetooth", "NA", "TV", "NA", "NA", "Optical", "NA", "Analog"]
 Subwoofer = {0:-4,4:-3,8:-2,12:-1,16:0,20:1,24:2,28:3,32:4}
 Style_val = {3:"Movie",10:"Standard",12:"Game"}
 Input_val={5:"Bluetooth",7:"TV",10:"Optical",12:"Analog"}
@@ -151,19 +149,26 @@ def set_by_hex(data, device):
     if (data >> 104 != 0xccaa0e0500):
         _LOGGER.warning("Missing expected 0xccaa0e0500 at start of data")
     if (data >> 40) & 16777215 != 0x202000:
-        _logger.warning("Missing expected 0x202000 in data")
+        _LOGGER.warning("Missing expected 0x202000 in data")
     cleaned_data = data & (0x10 ** 32 - 1) #strip 0xCCAA given fixed length
     if not checksum_int(cleaned_data):
         _LOGGER.warning("Bad checksum in data")
     device._status = "init"
-    device._power = bool((data >> 96) & 1)
-    device._current_source = Input_val[(data >> 88) & 0xff]
-    device._muted  = bool((data >> 80) & 1)
-    volume = (data >> 72) & 0xff
-    device._volume = (volume * 1.666) / 100
-    device._sound_mode = Style_val[(data >> 24) & 0xff]
-    device._attr_extra_state_attributes['is_clear_voice'] =  bool((data >> 18) & 1)
-    device._attr_extra_state_attributes['is_bass_extension'] =  bool((data >> 21) & 1)
-    device._attr_extra_state_attributes['subwoofer'] =  Subwoofer[(data >> 64) & 0xff]
-    device._attr_extra_state_attributes['leds'] =  LED_val[(data >> 8) & 0x3]
+    if device._type == "media_player" :
+        device._power = bool((data >> 96) & 1)
+        device._current_source = Input_val[(data >> 88) & 0xff]
+        device._muted  = bool((data >> 80) & 1)
+        volume = (data >> 72) & 0xff
+        device._volume = (volume * 1.666) / 100
+        device._sound_mode = Style_val[(data >> 24) & 0xff]
+    elif device._type == "clear_voice" :
+        device._power = bool((data >> 18) & 1)
+    elif device._type == "bass_ext" :
+        device._power = bool((data >> 21) & 1)
+    elif device._type == "subwoofer" :  
+        device._sub = Subwoofer[(data >> 64) & 0xff]
+    elif device._type == "led" :  
+        device._led = LED_val[(data >> 8) & 0x3]    
+    else :
+        _LOGGER.warning("Invalid device type")    
     return device
