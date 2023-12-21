@@ -9,10 +9,10 @@ from homeassistant.helpers.entity import Entity
 _LOGGER = logging.getLogger(__name__)
 
 # Supported domains
-SUPPORTED_DOMAINS = ['media_player', 'switch', 'number', 'select']
+SUPPORTED_DOMAINS = ["media_player", "switch", "number", "select"]
 
 # VERSION
-#VERSION = '0.1.0'
+# VERSION = '0.1.0'
 
 # DOMAIN
 DOMAIN = "yamaha_sr_c20a"
@@ -20,21 +20,35 @@ DOMAIN = "yamaha_sr_c20a"
 SCAN_INTERVAL = timedelta(seconds=15)
 
 # DEFAULTS
-DEFAULT_NAME = 'Yamaha SR-C20A'
+DEFAULT_NAME = "Yamaha SR-C20A"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_DEVICES):
-            vol.All(cv.ensure_list, [
-                vol.Schema({
-                    vol.Required("mac_adress", default='XX:XX:XX:XX'): cv.string,
-                    vol.Required(CONF_DEVICE_ID): cv.string,
-                    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-                    vol.Optional("polling_auto", default=False): cv.boolean,
-                }),
-            ]),
-        })
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_DEVICES): vol.All(
+                    cv.ensure_list,
+                    [
+                        vol.Schema(
+                            {
+                                vol.Required(
+                                    "mac_adress", default="XX:XX:XX:XX"
+                                ): cv.string,
+                                vol.Required(CONF_DEVICE_ID): cv.string,
+                                vol.Optional(
+                                    CONF_NAME, default=DEFAULT_NAME
+                                ): cv.string,
+                                vol.Optional("polling_auto", default=False): cv.boolean,
+                            }
+                        ),
+                    ],
+                ),
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
 
 async def async_setup(hass, config):
     """Initialize the Soundbar device."""
@@ -67,8 +81,10 @@ async def async_setup(hass, config):
 
     for domain in SUPPORTED_DOMAINS:
         hass.async_create_task(
-            discovery.async_load_platform(hass, domain, DOMAIN, {}, config))
+            discovery.async_load_platform(hass, domain, DOMAIN, {}, config)
+        )
     return True
+
 
 class SoundbarDevice(Entity):
     """Representation of a soundbar device."""
@@ -77,7 +93,7 @@ class SoundbarDevice(Entity):
         """Initialize the Soundbar device."""
         self._name = name
         self._device_id = device_id
-        self._macAdress = macAdress
+        self._macAdress = str(macAdress)
         self._polling_auto = polling_auto
 
     @property
