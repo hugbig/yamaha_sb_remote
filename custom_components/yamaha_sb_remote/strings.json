@@ -1,0 +1,24 @@
+{
+    "title": "Yamaha SB Remote",
+    "config": {
+        "flow_title": "Yamaha SB Remote configuration",
+        "step": {
+            "user": {
+                "title": "Configuration",
+                "description": "Set the configuration for your device",
+                "data": {
+                    "mac_adress": "Mac Adress",
+                    "device_id": "UDevice ID",
+                    "name" : "Name",
+                    "polling_auto" : "Auto polling for update"
+                },
+                "data_description": {
+                    "mac_adress": "Mac Adress of yout device",
+                    "device_id": "A unique ID for your Device like GUID",
+                    "name": "Name of your device",
+                    "polling_auto": "Auto polling for update"
+                }
+            }
+        }
+    }
+}

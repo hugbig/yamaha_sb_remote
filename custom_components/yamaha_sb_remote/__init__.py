@@ -1,7 +1,10 @@
-import logging
-import voluptuous as vol
+"""Fichier init."""
 from datetime import timedelta
-from homeassistant.const import CONF_DEVICES, CONF_NAME, CONF_DEVICE_ID
+import logging
+
+import voluptuous as vol
+
+from homeassistant.const import CONF_DEVICE_ID, CONF_DEVICES, CONF_NAME
 from homeassistant.helpers import config_validation as cv, discovery
 from homeassistant.helpers.entity import Entity
 
