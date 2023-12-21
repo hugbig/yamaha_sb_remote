@@ -15,7 +15,7 @@ SUPPORTED_DOMAINS = ["media_player", "switch", "number", "select"]
 # VERSION = '0.1.0'
 
 # DOMAIN
-DOMAIN = "yamaha_sr_c20a"
+DOMAIN = "yamaha_sb_remote"
 
 SCAN_INTERVAL = timedelta(seconds=15)
 
