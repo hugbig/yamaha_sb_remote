@@ -1,16 +1,15 @@
 {
-    "domain": "yamaha_sr_c20a",
-    "name": "yamaha_sr_c20a",
+    "domain": "yamaha_sb_remote",
+    "name": "yamaha_sb_remote",
     "codeowners": ["@hbigot"],
     "config_flow": false,
     "dependencies": ["bluetooth_adapters"],
-    "documentation": "https://github.com/hugbig/yamaha_sr_c20a",
+    "documentation": "https://github.com/hugbig/yamaha_sb_remote",
     "iot_class": "local_polling",
-    "issue_tracker": "https://github.com/hugbig/yamaha_sr_c20a/issues",
+    "issue_tracker": "https://github.com/hugbig/yamaha_sb_remote/issues",
     "loggers": [
-      "yamaha_sr_c20a"
+      "yamaha_sb_remote"
     ],
     "requirements": [],
     "version": "1.0.0"
   }
-  
