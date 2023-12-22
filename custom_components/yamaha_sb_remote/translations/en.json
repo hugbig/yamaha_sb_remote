@@ -1,0 +1,28 @@
+{
+    "config": {
+
+        "abort": {
+            "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+            "single_instance_allowed": "Only one instance is allowed"
+        },
+        "error": {
+            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+            "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+            "unknown": "[%key:common::config_flow::error::unknown%]"
+        },
+        "step": {
+
+            "user": {
+                "data": {
+                    "mac_adress": "Mac Adress",
+                    "device_id": "Device ID",
+                    "name" : "Name",
+                    "polling_auto" : "Auto polling for update"
+                },
+                "data_description": {
+                    "device_id": "Must be unique"
+                }
+            }
+        }
+    }
+}

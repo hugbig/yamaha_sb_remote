@@ -1,6 +1,7 @@
 from .ble_connect import BleData
 
 from custom_components.yamaha_sb_remote import _LOGGER, DOMAIN as SOUNDBAR_DOMAIN
+from homeassistant.const import CONF_DEVICE_ID, CONF_NAME
 from homeassistant.components.switch import (
     SwitchEntity,
 )
@@ -12,28 +13,25 @@ from homeassistant.const import STATE_ON, STATE_OFF
 SWITCH_LIST = ["clear_voice", "bass_ext"]
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_entry(hass, config, async_add_entities):
     """Set up platform."""
     """Initialize the Soundbar device."""
     devices = []
-    soundbar_list = hass.data[SOUNDBAR_DOMAIN]
 
-    for device in soundbar_list:
-        _LOGGER.debug("Configured a new SoundbarSwitch %s", device.name)
-        for switch in SWITCH_LIST:
-            devices.append(SoundbarSwitch(hass, device, switch))
+    for switch in SWITCH_LIST:
+        devices.append(SoundbarSwitch(hass, config, switch))
     async_add_entities(devices)
 
 
 class SoundbarSwitch(SwitchEntity):
-    def __init__(self, hass, DeviceEntity, switch):
+    def __init__(self, hass, config, switch):
         self._state = STATE_OFF
         self._type = switch
         self.hass = hass
-        self._macAdress = DeviceEntity.macAdress
-        self._device_id = DeviceEntity.device_id
-        self._name = DeviceEntity.name + "_" + switch
-        self._pollingAuto = DeviceEntity.pollingAuto
+        self._macAdress = config.data["mac_adress"]
+        self._device_id = config.data[CONF_DEVICE_ID]
+        self._name = config.data[CONF_NAME] + "_" + switch
+        self._pollingAuto = config.data["polling_auto"]
         self._power = None
         self._status = "unint"
 

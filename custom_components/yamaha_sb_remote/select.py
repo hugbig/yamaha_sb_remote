@@ -1,34 +1,28 @@
 from .ble_connect import BleData
 
 from custom_components.yamaha_sb_remote import _LOGGER, DOMAIN as SOUNDBAR_DOMAIN
+from homeassistant.const import CONF_DEVICE_ID, CONF_NAME
 from homeassistant.components.select import (
     SelectEntity,
 )
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_entry(hass, config, async_add_entities):
     """Set up platform."""
     """Initialize the Soundbar device."""
-    devices = []
-    soundbar_list = hass.data[SOUNDBAR_DOMAIN]
-
-    for device in soundbar_list:
-        _LOGGER.debug("Configured a new SoundbarNumber %s", device.name)
-        devices.append(SoundbarLed(hass, device))
-
-    async_add_entities(devices)
+    async_add_entities([SoundbarLed(hass, config)])
 
 
 class SoundbarLed(SelectEntity):
-    def __init__(self, hass, DeviceEntity):
+    def __init__(self, hass, config):
         self._state = None
         self._led = None
         self._type = "led"
         self.hass = hass
-        self._macAdress = DeviceEntity.macAdress
-        self._device_id = DeviceEntity.device_id
-        self._name = DeviceEntity.name + "_led"
-        self._pollingAuto = DeviceEntity.pollingAuto
+        self._macAdress = config.data["mac_adress"]
+        self._device_id = config.data[CONF_DEVICE_ID]
+        self._name = config.data[CONF_NAME] + "_led"
+        self._pollingAuto = config.data["polling_auto"]
         self._status = "unint"
         self._attr_current_option = None
         self._attr_options = ["Bright", "Dim", "Off"]

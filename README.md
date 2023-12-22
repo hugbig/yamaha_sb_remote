@@ -1,3 +1,3 @@
-[![Validate](https://github.com/hugbig/yamaha_sr_c20a/actions/workflows/validate.yaml/badge.svg)](https://github.com/hugbig/yamaha_sr_c20a/actions/workflows/validate.yaml)
-# yamaha_sr_c20a
-Home assistant intégration for Yamaha SR-C20A soundbar
+[![Validate](https://github.com/hugbig/yamaha_sb_remote/actions/workflows/validate.yaml/badge.svg)](https://github.com/hugbig/yyamaha_sb_remote/actions/workflows/validate.yaml)
+# yamaha_sb_remote
+Home assistant intégration for Yamaha soundbar using yamaha sb remote app
