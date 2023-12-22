@@ -21,6 +21,7 @@ class SoundbarNumber(NumberEntity):
         self._state = None
         self._sub = None
         self._type = "subwoofer"
+        self._service_name = config.data[CONF_NAME]
         self.hass = hass
         self._macAdress = config.data["mac_adress"]
         self._device_id = config.entry_id
@@ -61,7 +62,7 @@ class SoundbarNumber(NumberEntity):
         return DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(SOUNDBAR_DOMAIN, self._device_id)},
-            name=self._name,
+            name=self._service_name,
             manufacturer=DEVICE_MANUFACTURER,
             model=SOUNDBAR_DOMAIN,
         )

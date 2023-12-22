@@ -27,6 +27,7 @@ class SoundbarSwitch(SwitchEntity):
         self._state = STATE_OFF
         self._type = switch
         self.hass = hass
+        self._service_name = config.data[CONF_NAME]
         self._macAdress = config.data["mac_adress"]
         self._device_id = config.entry_id
         self._name = config.data[CONF_NAME] + "_" + switch
@@ -91,7 +92,7 @@ class SoundbarSwitch(SwitchEntity):
         return DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(SOUNDBAR_DOMAIN, self._device_id)},
-            name=self._name,
+            name=self._service_name,
             manufacturer=DEVICE_MANUFACTURER,
             model=SOUNDBAR_DOMAIN,
         )
