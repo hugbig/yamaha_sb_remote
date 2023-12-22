@@ -58,7 +58,7 @@ class SoundbarLed(SelectEntity):
         return DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(SOUNDBAR_DOMAIN, self._device_id)},
-            name=self._device_id,
+            name=self._name,
             manufacturer=DEVICE_MANUFACTURER,
             model=SOUNDBAR_DOMAIN,
         )
