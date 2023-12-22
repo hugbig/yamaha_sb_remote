@@ -1,15 +1,14 @@
-from .ble_connect import BleData
-
-
 from custom_components.yamaha_sb_remote import _LOGGER, DOMAIN as SOUNDBAR_DOMAIN
+from homeassistant.const import CONF_DEVICE_ID, CONF_NAME
+
 from homeassistant.components.media_player import (
+    MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
-    MediaPlayerDeviceClass,
 )
+from homeassistant.const import STATE_OFF, STATE_ON
 
-
-from homeassistant.const import STATE_ON, STATE_OFF
+from .ble_connect import BleData
 
 DEVICE_SOURCE_TYPE = ["Bluetooth", "TV", "Optical", "Analog"]
 
@@ -32,12 +31,13 @@ class YamahaMediaPlayer(MediaPlayerEntity):
     _attr_has_entity_name = True
     _attr_name = None
 
-    def __init__(self, hass, DeviceEntity):
+    def __init__(self, hass, config):
         _LOGGER.info("Initializing Yamaha mediaplayer")
         self.hass = hass
-        self._macAdress = DeviceEntity.macAdress
-        self._device_id = DeviceEntity.device_id
-        self._name = DeviceEntity.name
+        self._macAdress = config.data["mac_adress"]
+        self._device_id = config.data[CONF_DEVICE_ID]
+        self._name = config.data[CONF_NAME]
+        self._pollingAuto = config.data["polling_auto"]
         self._state = STATE_OFF
         self._status = "unint"
         self._type = "media_player"
@@ -46,7 +46,6 @@ class YamahaMediaPlayer(MediaPlayerEntity):
         self._volume = 0
         self._sound_mode = None
         self._muted = False
-        self._pollingAuto = DeviceEntity.pollingAuto
 
     # Run when added to HASS TO LOAD SOURCES
     async def async_added_to_hass(self):
@@ -180,10 +179,6 @@ class YamahaMediaPlayer(MediaPlayerEntity):
                     self._state = STATE_OFF
 
 
-def setup_platform(hass, config, add_devices, discovery_info=None):
-    devices = []
-    soundbar_list = hass.data[SOUNDBAR_DOMAIN]
-    for device in soundbar_list:
-        _LOGGER.debug("Configured a new SoundbarMediaPlayer %s", device.name)
-        devices.append(YamahaMediaPlayer(hass, device))
-        add_devices(devices)
+def async_setup_entry(hass, config, async_add_entities):
+    # add_devices(YamahaMediaPlayer(hass, config))
+    async_add_entities([YamahaMediaPlayer(hass, config)])

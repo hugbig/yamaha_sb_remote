@@ -15,12 +15,14 @@ DEFAULT_NAME = "Yamaha SR-C20A"
 class ConfigFlow(ConfigFlow, domain=SOUNDBAR_DOMAIN):
     """Config flow implementation."""
 
-    # La version de notre configFlow. Va permettre de migrer les entités
-    # vers une version plus récente en cas de changement
     VERSION = 1
+    _user_inputs: dict = {}
 
     async def async_step_user(self, user_input: dict | None = None) -> FlowResult:
         """User Step."""
+        """Handle a flow initiated by the user."""
+        # if self._async_current_entries():
+        #    return self.async_abort(reason="single_instance_allowed")
         user_form = vol.Schema(
             {
                 vol.Required("mac_adress", default="XX:XX:XX:XX"): cv.string,
@@ -33,8 +35,8 @@ class ConfigFlow(ConfigFlow, domain=SOUNDBAR_DOMAIN):
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=user_form)
 
-        # 2ème appel : il y a des user_input -> on stocke le résultat
-        # TODO: utiliser les user_input
-        _LOGGER.debug(
-            "config_flow step user (2). On a reçu les valeurs: %s", user_input
+        self._user_inputs.update(user_input)
+
+        return self.async_create_entry(
+            title=self._user_inputs[CONF_NAME], data=self._user_inputs
         )
