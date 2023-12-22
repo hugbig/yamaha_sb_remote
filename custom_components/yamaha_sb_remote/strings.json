@@ -9,9 +9,6 @@
                     "mac_adress": "Mac Adress",
                     "name" : "Name",
                     "polling_auto" : "Auto polling for update"
-                },
-                "data_description": {
-                    "device_id": "Must be unique"
                 }
             }
         },
