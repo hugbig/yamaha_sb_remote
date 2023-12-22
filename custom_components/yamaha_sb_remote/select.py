@@ -1,10 +1,13 @@
-from .ble_connect import BleData
-
-from custom_components.yamaha_sb_remote import _LOGGER, DOMAIN as SOUNDBAR_DOMAIN
-from homeassistant.const import CONF_DEVICE_ID, CONF_NAME
-from homeassistant.components.select import (
-    SelectEntity,
+from custom_components.yamaha_sb_remote import (
+    DEVICE_MANUFACTURER,
+    DOMAIN as SOUNDBAR_DOMAIN,
 )
+
+from homeassistant.components.select import SelectEntity
+from homeassistant.const import CONF_NAME
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+
+from .ble_connect import BleData
 
 
 async def async_setup_entry(hass, config, async_add_entities):
@@ -19,8 +22,9 @@ class SoundbarLed(SelectEntity):
         self._led = None
         self._type = "led"
         self.hass = hass
+        self._service_name = config.data[CONF_NAME]
         self._macAdress = config.data["mac_adress"]
-        self._device_id = config.data[CONF_DEVICE_ID]
+        self._device_id = config.entry_id
         self._name = config.data[CONF_NAME] + "_led"
         self._pollingAuto = config.data["polling_auto"]
         self._status = "unint"
@@ -48,6 +52,17 @@ class SoundbarLed(SelectEntity):
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
         return self._device_id + "_" + self._type
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            entry_type=DeviceEntryType.SERVICE,
+            identifiers={(SOUNDBAR_DOMAIN, self._device_id)},
+            name=self._service_name,
+            manufacturer=DEVICE_MANUFACTURER,
+            model=SOUNDBAR_DOMAIN,
+        )
 
     async def async_update(self):
         """Update the Number State."""

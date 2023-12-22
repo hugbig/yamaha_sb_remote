@@ -1,12 +1,16 @@
-from custom_components.yamaha_sb_remote import _LOGGER, DOMAIN as SOUNDBAR_DOMAIN
-from homeassistant.const import CONF_DEVICE_ID, CONF_NAME
+from custom_components.yamaha_sb_remote import (
+    _LOGGER,
+    DEVICE_MANUFACTURER,
+    DOMAIN as SOUNDBAR_DOMAIN,
+)
 
 from homeassistant.components.media_player import (
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
 )
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.const import CONF_NAME, STATE_OFF, STATE_ON
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 from .ble_connect import BleData
 
@@ -35,8 +39,9 @@ class YamahaMediaPlayer(MediaPlayerEntity):
         _LOGGER.info("Initializing Yamaha mediaplayer")
         self.hass = hass
         self._macAdress = config.data["mac_adress"]
-        self._device_id = config.data[CONF_DEVICE_ID]
+        self._device_id = config.entry_id
         self._name = config.data[CONF_NAME]
+        self._service_name = config.data[CONF_NAME]
         self._pollingAuto = config.data["polling_auto"]
         self._state = STATE_OFF
         self._status = "unint"
@@ -100,6 +105,17 @@ class YamahaMediaPlayer(MediaPlayerEntity):
     def is_volume_muted(self):
         """Boolean if volume is currently muted."""
         return self._muted
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            entry_type=DeviceEntryType.SERVICE,
+            identifiers={(SOUNDBAR_DOMAIN, self._device_id)},
+            name=self._service_name,
+            manufacturer=DEVICE_MANUFACTURER,
+            model=SOUNDBAR_DOMAIN,
+        )
 
     async def async_set_volume_level(self, volume):
         """Sets the volume level."""

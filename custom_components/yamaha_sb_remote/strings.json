@@ -7,12 +7,8 @@
                 "description": "Set the configuration for your device",
                 "data": {
                     "mac_adress": "Mac Adress",
-                    "device_id": "Device ID",
                     "name" : "Name",
                     "polling_auto" : "Auto polling for update"
-                },
-                "data_description": {
-                    "device_id": "Must be unique"
                 }
             }
         },

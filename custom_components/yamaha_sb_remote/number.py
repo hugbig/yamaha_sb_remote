@@ -1,7 +1,11 @@
-from custom_components.yamaha_sb_remote import _LOGGER, DOMAIN as SOUNDBAR_DOMAIN
+from custom_components.yamaha_sb_remote import (
+    DEVICE_MANUFACTURER,
+    DOMAIN as SOUNDBAR_DOMAIN,
+)
 
 from homeassistant.components.number import NumberEntity
-from homeassistant.const import CONF_DEVICE_ID, CONF_NAME
+from homeassistant.const import CONF_NAME
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 from .ble_connect import BleData
 
@@ -17,9 +21,10 @@ class SoundbarNumber(NumberEntity):
         self._state = None
         self._sub = None
         self._type = "subwoofer"
+        self._service_name = config.data[CONF_NAME]
         self.hass = hass
         self._macAdress = config.data["mac_adress"]
-        self._device_id = config.data[CONF_DEVICE_ID]
+        self._device_id = config.entry_id
         self._name = config.data[CONF_NAME] + "_subwoofer"
         self._pollingAuto = config.data["polling_auto"]
         self._status = "unint"
@@ -50,6 +55,17 @@ class SoundbarNumber(NumberEntity):
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
         return self._device_id + "_" + self._type
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            entry_type=DeviceEntryType.SERVICE,
+            identifiers={(SOUNDBAR_DOMAIN, self._device_id)},
+            name=self._service_name,
+            manufacturer=DEVICE_MANUFACTURER,
+            model=SOUNDBAR_DOMAIN,
+        )
 
     async def async_update(self):
         """Update the Number State."""

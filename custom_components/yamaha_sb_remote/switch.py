@@ -1,14 +1,13 @@
-from .ble_connect import BleData
-
-from custom_components.yamaha_sb_remote import _LOGGER, DOMAIN as SOUNDBAR_DOMAIN
-from homeassistant.const import CONF_DEVICE_ID, CONF_NAME
-from homeassistant.components.switch import (
-    SwitchEntity,
+from custom_components.yamaha_sb_remote import (
+    DEVICE_MANUFACTURER,
+    DOMAIN as SOUNDBAR_DOMAIN,
 )
 
-import homeassistant.helpers.config_validation as cv
+from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import CONF_NAME, STATE_OFF, STATE_ON
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
-from homeassistant.const import STATE_ON, STATE_OFF
+from .ble_connect import BleData
 
 SWITCH_LIST = ["clear_voice", "bass_ext"]
 
@@ -28,8 +27,9 @@ class SoundbarSwitch(SwitchEntity):
         self._state = STATE_OFF
         self._type = switch
         self.hass = hass
+        self._service_name = config.data[CONF_NAME]
         self._macAdress = config.data["mac_adress"]
-        self._device_id = config.data[CONF_DEVICE_ID]
+        self._device_id = config.entry_id
         self._name = config.data[CONF_NAME] + "_" + switch
         self._pollingAuto = config.data["polling_auto"]
         self._power = None
@@ -46,7 +46,7 @@ class SoundbarSwitch(SwitchEntity):
             ble_connect = BleData(self, self.hass, self._macAdress)
             await ble_connect.callDevice()
             if self._status == "init":
-                if self._power == True:
+                if self._power is True:
                     self._state = STATE_ON
                 else:
                     self._state = STATE_OFF
@@ -85,3 +85,14 @@ class SoundbarSwitch(SwitchEntity):
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
         return self._device_id + "_" + self._type
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            entry_type=DeviceEntryType.SERVICE,
+            identifiers={(SOUNDBAR_DOMAIN, self._device_id)},
+            name=self._service_name,
+            manufacturer=DEVICE_MANUFACTURER,
+            model=SOUNDBAR_DOMAIN,
+        )
