@@ -4,7 +4,7 @@ import logging
 
 import voluptuous as vol
 
-from homeassistant.const import CONF_DEVICE_ID, CONF_DEVICES, CONF_NAME
+from homeassistant.const import CONF_DEVICES, CONF_NAME
 from homeassistant.helpers import config_validation as cv
 
 # LOGGING
@@ -19,37 +19,12 @@ SUPPORTED_DOMAINS = ["media_player", "switch", "number", "select"]
 # DOMAIN
 DOMAIN = "yamaha_sb_remote"
 
+DEVICE_MANUFACTURER = "YAMAHA"
+
 SCAN_INTERVAL = timedelta(seconds=15)
 
 # DEFAULTS
 DEFAULT_NAME = "Yamaha SR-C20A"
-
-CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Schema(
-            {
-                vol.Required(CONF_DEVICES): vol.All(
-                    cv.ensure_list,
-                    [
-                        vol.Schema(
-                            {
-                                vol.Required(
-                                    "mac_adress", default="XX:XX:XX:XX"
-                                ): cv.string,
-                                vol.Required(CONF_DEVICE_ID): cv.string,
-                                vol.Optional(
-                                    CONF_NAME, default=DEFAULT_NAME
-                                ): cv.string,
-                                vol.Optional("polling_auto", default=False): cv.boolean,
-                            }
-                        ),
-                    ],
-                ),
-            }
-        )
-    },
-    extra=vol.ALLOW_EXTRA,
-)
 
 
 async def async_setup_entry(hass, config):
