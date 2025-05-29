@@ -6,12 +6,15 @@ from .utils import *
 
 _LOGGER = logging.getLogger(__name__)
 
+
+CONNECTION_LOCK = asyncio.Lock()
+
+
 class BleData:
     def __init__(self, device, hass, macAdress):
         self.hass = hass
         self.macAdress = macAdress
         self.device = device
-        self.connection_lock = asyncio.Lock()
 
     def handle_data(self,handle, value):
         _LOGGER.info("Received data: %s" % (value.hex()))
@@ -42,13 +45,11 @@ class BleData:
         else:
             _LOGGER.warning("Received data that is not an expected message size: 0x%s" % (value.hex()))
         if (handle != 0x8): _LOGGER.info("Bad handle: %s" % str(handle))
-    
-
 
     async def callDevice(self, command = None):
         request = create_command_code(['request'], self.device)
         bleDevice = bluetooth.async_ble_device_from_address(self.hass, self.macAdress, connectable=True)
-        async with self.connection_lock:
+        async with CONNECTION_LOCK:
             try:
                 async with BleakClient(bleDevice) as adapter:
                     await adapter.start_notify(
