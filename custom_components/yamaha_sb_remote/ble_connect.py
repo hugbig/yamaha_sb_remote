@@ -1,5 +1,5 @@
 import asyncio
-from bleak import BleakScanner, BleakClient
+from bleak import BleakScanner, BleakClient, BleakError
 import logging
 from homeassistant.components import bluetooth
 from .utils import *
@@ -11,6 +11,7 @@ class BleData:
         self.hass = hass
         self.macAdress = macAdress
         self.device = device
+        self.connection_lock = asyncio.Lock()
 
     def handle_data(self,handle, value):
         _LOGGER.info("Received data: %s" % (value.hex()))
@@ -47,16 +48,28 @@ class BleData:
     async def callDevice(self, command = None):
         request = create_command_code(['request'], self.device)
         bleDevice = bluetooth.async_ble_device_from_address(self.hass, self.macAdress, connectable=True)
-        async with BleakClient(bleDevice) as adapter:
-            await adapter.start_notify('5cafe9de-e7b0-4e0b-8fb9-2da91a7ae3ed', self.handle_data)
-            await adapter.write_gatt_char("0c50e7fa-594c-408b-ae0d-b53b884b7c08",request)  
-            while self.device._status == 'unint' :
-                _LOGGER.debug("WAIT FOR notify handle : " + self.device._status)
-                await asyncio.sleep(0.06)
-            if command == None :
-                return
-            else: 
-                _LOGGER.debug("COMMAND " + command[0])
-                code = create_command_code(command, self.device)
-                await adapter.write_gatt_char("0c50e7fa-594c-408b-ae0d-b53b884b7c08",code)
-                await asyncio.sleep(0.1)
+        async with self.connection_lock:
+            try:
+                async with BleakClient(bleDevice) as adapter:
+                    await adapter.start_notify(
+                        "5cafe9de-e7b0-4e0b-8fb9-2da91a7ae3ed", self.handle_data
+                    )
+                    await adapter.write_gatt_char(
+                        "0c50e7fa-594c-408b-ae0d-b53b884b7c08", request
+                    )
+                    while self.device._status == "unint":
+                        _LOGGER.debug("WAIT FOR notify handle : " + self.device._status)
+                        await asyncio.sleep(0.06)
+                    if command == None:
+                        return
+                    else:
+                        _LOGGER.debug("COMMAND " + command[0])
+                        code = create_command_code(command, self.device)
+                        await adapter.write_gatt_char(
+                            "0c50e7fa-594c-408b-ae0d-b53b884b7c08", code
+                        )
+                        await asyncio.sleep(0.1)
+            except BleakError as e:
+                _LOGGER.error("BLE operation failed: %s", e)
+            except Exception as e:
+                _LOGGER.error("Unexpected error: %s", e)
