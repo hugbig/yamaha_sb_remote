@@ -1,10 +1,14 @@
 import asyncio
-from bleak import BleakScanner, BleakClient
+from bleak import BleakScanner, BleakClient, BleakError
 import logging
 from homeassistant.components import bluetooth
 from .utils import *
 
 _LOGGER = logging.getLogger(__name__)
+
+
+CONNECTION_LOCK = asyncio.Lock()
+
 
 class BleData:
     def __init__(self, device, hass, macAdress):
@@ -41,22 +45,32 @@ class BleData:
         else:
             _LOGGER.warning("Received data that is not an expected message size: 0x%s" % (value.hex()))
         if (handle != 0x8): _LOGGER.info("Bad handle: %s" % str(handle))
-    
-
 
     async def callDevice(self, command = None):
         request = create_command_code(['request'], self.device)
         bleDevice = bluetooth.async_ble_device_from_address(self.hass, self.macAdress, connectable=True)
-        async with BleakClient(bleDevice) as adapter:
-            await adapter.start_notify('5cafe9de-e7b0-4e0b-8fb9-2da91a7ae3ed', self.handle_data)
-            await adapter.write_gatt_char("0c50e7fa-594c-408b-ae0d-b53b884b7c08",request)  
-            while self.device._status == 'unint' :
-                _LOGGER.debug("WAIT FOR notify handle : " + self.device._status)
-                await asyncio.sleep(0.06)
-            if command == None :
-                return
-            else: 
-                _LOGGER.debug("COMMAND " + command[0])
-                code = create_command_code(command, self.device)
-                await adapter.write_gatt_char("0c50e7fa-594c-408b-ae0d-b53b884b7c08",code)
-                await asyncio.sleep(0.1)
+        async with CONNECTION_LOCK:
+            try:
+                async with BleakClient(bleDevice) as adapter:
+                    await adapter.start_notify(
+                        "5cafe9de-e7b0-4e0b-8fb9-2da91a7ae3ed", self.handle_data
+                    )
+                    await adapter.write_gatt_char(
+                        "0c50e7fa-594c-408b-ae0d-b53b884b7c08", request
+                    )
+                    while self.device._status == "unint":
+                        _LOGGER.debug("WAIT FOR notify handle : " + self.device._status)
+                        await asyncio.sleep(0.06)
+                    if command == None:
+                        return
+                    else:
+                        _LOGGER.debug("COMMAND " + command[0])
+                        code = create_command_code(command, self.device)
+                        await adapter.write_gatt_char(
+                            "0c50e7fa-594c-408b-ae0d-b53b884b7c08", code
+                        )
+                        await asyncio.sleep(0.1)
+            except BleakError as e:
+                _LOGGER.error("BLE operation failed: %s", e)
+            except Exception as e:
+                _LOGGER.error("Unexpected error: %s", e)
