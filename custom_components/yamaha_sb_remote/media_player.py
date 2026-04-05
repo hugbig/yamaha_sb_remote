@@ -195,6 +195,5 @@ class YamahaMediaPlayer(MediaPlayerEntity):
                     self._state = STATE_OFF
 
 
-def async_setup_entry(hass, config, async_add_entities):
-    # add_devices(YamahaMediaPlayer(hass, config))
+async def async_setup_entry(hass, config, async_add_entities):
     async_add_entities([YamahaMediaPlayer(hass, config)])

@@ -49,6 +49,9 @@ class BleData:
     async def callDevice(self, command = None):
         request = create_command_code(['request'], self.device)
         bleDevice = bluetooth.async_ble_device_from_address(self.hass, self.macAdress, connectable=True)
+        if bleDevice is None:
+            _LOGGER.warning("BLE device not found for address %s, skipping", self.macAdress)
+            return
         async with CONNECTION_LOCK:
             try:
                 async with BleakClient(bleDevice) as adapter:
@@ -58,9 +61,17 @@ class BleData:
                     await adapter.write_gatt_char(
                         "0c50e7fa-594c-408b-ae0d-b53b884b7c08", request
                     )
+                    elapsed = 0.0
                     while self.device._status == "unint":
                         _LOGGER.debug("WAIT FOR notify handle : " + self.device._status)
                         await asyncio.sleep(0.06)
+                        elapsed += 0.06
+                        if elapsed >= 5.0:
+                            _LOGGER.error(
+                                "Timeout waiting for status notification from %s",
+                                self.macAdress,
+                            )
+                            return
                     if command == None:
                         return
                     else:
