@@ -71,6 +71,10 @@ class FakeSoundbar:
         self.answer_status = True
         self.connect_error: Exception | None = None
         self.frame_override: bytes | None = None
+        self.events_before_status: list[bytes] = []
+        self.fail_next = 0  # number of status requests to ignore
+        self.answer_after_commands = True  # answer status requests that follow a command
+        self._commanded = False
         self._callback = None
 
     async def connect(self) -> "FakeSoundbar":
@@ -81,17 +85,26 @@ class FakeSoundbar:
 
     async def start_notify(self, uuid, callback) -> None:
         self._callback = callback
+        self._commanded = False
 
     async def write_gatt_char(self, uuid, data) -> None:
         data = bytes(data)
         self.written.append(data)
         payload = data[3:-1]
         if payload == b"\x03\x05":
+            if self._commanded and not self.answer_after_commands:
+                return
+            if self.fail_next:
+                self.fail_next -= 1
+                return
             if self.answer_status and self._callback is not None:
                 status = self.frame_override or build_status_frame(self.state)
                 loop = asyncio.get_running_loop()
+                for event in self.events_before_status:
+                    loop.call_soon(self._callback, None, bytearray(event))
                 loop.call_soon(self._callback, None, bytearray(status))
             return
+        self._commanded = True
         self._apply(payload)
 
     async def disconnect(self) -> None:

@@ -1,89 +1,73 @@
 import asyncio
-from bleak import BleakClient, BleakError
+from bleak import BleakClient
 from bleak_retry_connector import establish_connection
 import logging
 from homeassistant.components import bluetooth
-from .utils import *
+from .protocol import is_status_frame
+from .utils import create_command_code, interpret_message
 
 _LOGGER = logging.getLogger(__name__)
 
-
-CONNECTION_LOCK = asyncio.Lock()
 
 NOTIFY_UUID = "5cafe9de-e7b0-4e0b-8fb9-2da91a7ae3ed"
 WRITE_UUID = "0c50e7fa-594c-408b-ae0d-b53b884b7c08"
 STATUS_TIMEOUT = 5.0
 
 
-class BleData:
-    def __init__(self, device, hass, macAdress):
-        self.hass = hass
-        self.macAdress = macAdress
-        self.device = device
+class SoundbarNotFound(Exception):
+    """No Bluetooth adapter or proxy can see the soundbar."""
 
-    def handle_data(self, characteristic, value):
-        _LOGGER.info("Received data: %s", value.hex())
-        if len(value) > 3:
-            length = value[2]
-            if value[0] != 0xcc:
-                _LOGGER.warning("Bad first bit: 0x%s", value.hex())
-            elif value[1] != 0xaa:
-                _LOGGER.warning("Bad second bit: 0x%s", value.hex())
-            elif not checksum_byte(value):
-                _LOGGER.warning("Bad checksum in data: 0x%s", value.hex())
-            elif len(value) - 4 != length:
-                _LOGGER.warning("Bad value for data length: 0x%s", value.hex())
-            elif length == 14:
-                self.device = set_by_hex(int(value.hex(), 16), self.device)
-            elif length in (2, 3, 5):
-                _LOGGER.info("Received: %s", interpret_message(value))
-            else:
-                _LOGGER.warning("Received unexpected data length: 0x%s", value.hex())
-        elif value.hex() == "":
-            _LOGGER.info("Received empty data packet, this is expected once on startup")
-        else:
-            _LOGGER.warning("Received data that is not an expected message size: 0x%s", value.hex())
 
-    async def callDevice(self, command=None):
-        request = create_command_code(['request'], self.device)
-        bleDevice = bluetooth.async_ble_device_from_address(self.hass, self.macAdress, connectable=True)
-        if bleDevice is None:
-            _LOGGER.warning("BLE device not found for address %s, skipping", self.macAdress)
-            return
-        async with CONNECTION_LOCK:
-            client = None
+class SoundbarTimeout(Exception):
+    """The soundbar did not send its status in time."""
+
+
+async def _wait_status(statuses: asyncio.Queue) -> bytes:
+    try:
+        async with asyncio.timeout(STATUS_TIMEOUT):
+            return await statuses.get()
+    except TimeoutError as err:
+        raise SoundbarTimeout("No status notification from the soundbar") from err
+
+
+async def async_exchange(hass, address: str, commands=()) -> bytes:
+    """Connect once: read the status, send the commands, read the status again.
+
+    `commands` is a list of commands, or a function that gets the first status frame and returns
+    them (so they can depend on the current state). Return the last status frame. The caller
+    makes sure only one exchange runs at a time.
+    """
+    device = bluetooth.async_ble_device_from_address(hass, address, connectable=True)
+    if device is None:
+        raise SoundbarNotFound(f"Bluetooth device {address} not found")
+
+    statuses: asyncio.Queue[bytes] = asyncio.Queue()
+
+    def on_notify(_characteristic, data: bytearray) -> None:
+        frame = bytes(data)
+        if is_status_frame(frame):
+            statuses.put_nowait(frame)
+        elif len(frame) > 3:
+            _LOGGER.debug("Event from soundbar: %s", interpret_message(frame))
+
+    request = create_command_code(["request"])
+    client = None
+    try:
+        client = await establish_connection(BleakClient, device, address)
+        await client.start_notify(NOTIFY_UUID, on_notify)
+        await client.write_gatt_char(WRITE_UUID, request)
+        frame = await _wait_status(statuses)
+        if callable(commands):
+            commands = commands(frame)
+        if commands:
+            for command in commands:
+                await client.write_gatt_char(WRITE_UUID, create_command_code(command))
+            await client.write_gatt_char(WRITE_UUID, request)
+            frame = await _wait_status(statuses)
+        return frame
+    finally:
+        if client is not None:
             try:
-                client = await establish_connection(
-                    BleakClient,
-                    bleDevice,
-                    bleDevice.address,
-                )
-                await client.start_notify(NOTIFY_UUID, self.handle_data)
-                await client.write_gatt_char(WRITE_UUID, request)
-                elapsed = 0.0
-                while self.device._status == "unint":
-                    _LOGGER.debug("WAIT FOR notify handle: %s", self.device._status)
-                    await asyncio.sleep(0.06)
-                    elapsed += 0.06
-                    if elapsed >= STATUS_TIMEOUT:
-                        _LOGGER.error(
-                            "Timeout waiting for status notification from %s",
-                            self.macAdress,
-                        )
-                        return
-                if command is None:
-                    return
-                _LOGGER.debug("COMMAND %s", command[0])
-                code = create_command_code(command, self.device)
-                await client.write_gatt_char(WRITE_UUID, code)
-                await asyncio.sleep(0.1)
-            except BleakError as e:
-                _LOGGER.error("BLE operation failed: %s", e)
-            except Exception as e:
-                _LOGGER.error("Unexpected error: %r", e)
-            finally:
-                if client is not None:
-                    try:
-                        await client.disconnect()
-                    except Exception:
-                        pass
+                await client.disconnect()
+            except Exception:  # noqa: BLE001 - the connection is gone either way
+                _LOGGER.debug("Error while disconnecting from %s", address, exc_info=True)

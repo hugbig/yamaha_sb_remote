@@ -8,6 +8,3 @@ target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E9", "F"]
-
-[tool.ruff.lint.per-file-ignores]
-"custom_components/yamaha_sb_remote/ble_connect.py" = ["F403", "F405"]

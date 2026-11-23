@@ -1,31 +1,20 @@
-"""Fichier init."""
-from datetime import timedelta
-import logging
+"""Yamaha soundbar (Bluetooth) integration."""
+
+from .const import DOMAIN, SUPPORTED_DOMAINS
+from .coordinator import YamahaSoundbarCoordinator
+
+__all__ = ["DOMAIN"]
 
 
-# LOGGING
-_LOGGER = logging.getLogger(__name__)
-
-# Supported domains
-SUPPORTED_DOMAINS = ["media_player", "switch", "number", "select"]
-
-# VERSION
-# VERSION = '0.1.0'
-
-# DOMAIN
-DOMAIN = "yamaha_sb_remote"
-
-DEVICE_MANUFACTURER = "YAMAHA"
-
-SCAN_INTERVAL = timedelta(seconds=15)
-
-# DEFAULTS
-DEFAULT_NAME = "Yamaha SR-C20A"
-
-
-async def async_setup_entry(hass, config):
-    """Initialize the Soundbar device."""
-    hass.data.setdefault(DOMAIN, {})
-
-    await hass.config_entries.async_forward_entry_setups(config, SUPPORTED_DOMAINS)
+async def async_setup_entry(hass, entry):
+    """Set up the soundbar: read its state once, then the platforms."""
+    coordinator = YamahaSoundbarCoordinator(hass, entry)
+    await coordinator.async_config_entry_first_refresh()
+    entry.runtime_data = coordinator
+    await hass.config_entries.async_forward_entry_setups(entry, SUPPORTED_DOMAINS)
     return True
+
+
+async def async_unload_entry(hass, entry):
+    """Unload the platforms; the coordinator stops with the entry."""
+    return await hass.config_entries.async_unload_platforms(entry, SUPPORTED_DOMAINS)

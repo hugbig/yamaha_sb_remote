@@ -4,7 +4,6 @@ from types import SimpleNamespace
 
 import pytest
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.entity_component import async_update_entity
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.yamaha_sb_remote import ble_connect
@@ -69,8 +68,3 @@ async def setup_integration(hass, config_entry) -> dict[str, str]:
         for key, (platform, suffix) in ENTITIES.items()
     }
 
-
-async def refresh(hass, entity_id: str) -> None:
-    """Run the entity's update, as a polling cycle would."""
-    await async_update_entity(hass, entity_id)
-    await hass.async_block_till_done()
