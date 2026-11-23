@@ -1,7 +1,7 @@
 {
     "domain": "yamaha_sb_remote",
     "name": "yamaha_sb_remote",
-    "codeowners": ["@hbigot"],
+    "codeowners": ["@hugbig"],
     "config_flow": true,
     "dependencies": ["bluetooth_adapters"],
     "documentation": "https://github.com/hugbig/yamaha_sb_remote",
@@ -11,5 +11,5 @@
       "yamaha_sb_remote"
     ],
     "requirements": [],
-    "version": "1.0.0"
+    "version": "1.1.0"
   }
