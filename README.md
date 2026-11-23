@@ -69,7 +69,16 @@ in:
 
 ## Development
 
-Tests and tooling are being added. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Python 3.14 is required (the version Home Assistant's test package uses):
+
+```sh
+pip install -r requirements-test.txt
+ruff check .
+pytest
+```
+
+The tests run against a fake soundbar that speaks the BLE protocol, so no hardware is needed. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

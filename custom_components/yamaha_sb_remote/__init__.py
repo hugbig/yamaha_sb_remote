@@ -2,10 +2,6 @@
 from datetime import timedelta
 import logging
 
-import voluptuous as vol
-
-from homeassistant.const import CONF_DEVICES, CONF_NAME
-from homeassistant.helpers import config_validation as cv
 
 # LOGGING
 _LOGGER = logging.getLogger(__name__)

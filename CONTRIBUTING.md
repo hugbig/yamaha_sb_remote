@@ -13,7 +13,14 @@ debug logs. Results from soundbars other than the SR-C20A are especially useful.
 
 1. Open an issue first for anything larger than a small fix, so we can agree on the approach.
 2. Create a branch from `main`.
-3. Describe in the pull request how you tested the change. An automated test suite is being added.
+3. Add or update tests for any behaviour you change, and run the lint and the tests:
+
+   ```sh
+   pip install -r requirements-test.txt
+   ruff check .
+   pytest
+   ```
+
 4. If possible, check the change on a real soundbar and say so in the pull request.
 5. Write commit messages in the [Conventional Commits](https://www.conventionalcommits.org) style
    (`feat:`, `fix:`, `docs:`, `test:`…) and add a line to [CHANGELOG.md](CHANGELOG.md) for

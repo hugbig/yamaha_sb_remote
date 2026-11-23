@@ -4,7 +4,7 @@ from custom_components.yamaha_sb_remote import DOMAIN as SOUNDBAR_DOMAIN
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow
-from homeassistant.const import CONF_DEVICE_ID, CONF_NAME
+from homeassistant.const import CONF_NAME
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
