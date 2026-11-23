@@ -6,6 +6,11 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+### Fixed
+
+- Commands and status frames whose checksum is 0x00: building such a command crashed, and such a
+  frame was rejected as a bad checksum.
+
 ## [1.1.0] - 2026-11-23
 
 First tagged release. Earlier versions were installed from `main` and all reported 1.0.0.

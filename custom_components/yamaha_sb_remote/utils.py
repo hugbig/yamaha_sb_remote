@@ -64,27 +64,12 @@ def checksum_int(input):
 
 
 def checksum_byte(input):
-    #checks the checksum of the data as a byte array
-    sum = 0
-    for i in input[2:-1]:
-        sum += i
-    sum = ~ sum #invert
-    sum = sum & 255 #take last 8 bits
-    sum += 1
-    if (sum != input[-1]):
-        return False
-    else:
-        return True
+    #checks the checksum of the data as a byte array (two's complement of the sum from the length byte)
+    return checksum_make(input[2:-1]) == input[-1]
 
 def checksum_make(input):
-    #creates a checksum from byte array and returns int
-    sum = 0
-    for i in input:
-        sum += i
-    sum = ~ sum #invert
-    sum = sum & 255 #take last 8 bits
-    sum += 1
-    return sum
+    #creates a checksum from byte array and returns int: the two's complement of the sum, on 8 bits
+    return (-sum(input)) & 0xFF
 
 def interpret_message(val):
     #interprets a byte array message
