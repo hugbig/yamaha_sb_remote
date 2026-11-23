@@ -1,0 +1,50 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: soundbar-model
+    attributes:
+      label: Soundbar model
+      placeholder: SR-C20A
+    validations:
+      required: true
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      description: Settings → About.
+    validations:
+      required: true
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration version
+      placeholder: 1.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: adapter
+    attributes:
+      label: Bluetooth adapter
+      options:
+        - Local adapter on the Home Assistant host
+        - ESPHome Bluetooth proxy
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Integration debug logs
+      description: >
+        Turn on debug logging on the integration page, reproduce the problem, then paste the logs.
+        Remove anything private if you prefer (MAC addresses).
+      render: text
