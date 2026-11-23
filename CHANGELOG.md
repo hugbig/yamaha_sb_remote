@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-23
+
 ### Changed
 
 - One Bluetooth connection per update for all five entities, instead of one per entity. The state
