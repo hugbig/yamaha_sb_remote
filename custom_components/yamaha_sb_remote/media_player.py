@@ -1,26 +1,28 @@
-from custom_components.yamaha_sb_remote import (
-    _LOGGER,
-    DEVICE_MANUFACTURER,
-    DOMAIN as SOUNDBAR_DOMAIN,
-)
+"""Media player: power, source, volume, mute and sound mode."""
 
 from homeassistant.components.media_player import (
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
+    MediaPlayerState,
 )
-from homeassistant.const import CONF_NAME, STATE_OFF, STATE_ON
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
-from .ble_connect import BleData
+from homeassistant.exceptions import ServiceValidationError
 
-DEVICE_SOURCE_TYPE = ["Bluetooth", "TV", "Optical", "Analog"]
+from .entity import YamahaEntity
+from .protocol import SOUND_MODES, SOURCES, VOLUME_FACTOR
 
-DEVICE_SOURCE_MODE = ["Standard", "Movie", "Game"]
+# Displayed name -> command name in utils.create_command_code
+SOURCE_COMMANDS = {"Bluetooth": "Bluetooth", "TV": "TV", "Optical": "Optical", "Analog": "Analog"}
+SOUND_MODE_COMMANDS = {"Standard": "Standard", "Movie": "Movie", "Game": "Game"}
+assert set(SOURCE_COMMANDS) == set(SOURCES.values())
+assert set(SOUND_MODE_COMMANDS) == set(SOUND_MODES.values())
+
+VOLUME_STEP = 5  # raw volume units
 
 
-class YamahaMediaPlayer(MediaPlayerEntity):
-    """Representation of the device."""
+class YamahaMediaPlayer(YamahaEntity, MediaPlayerEntity):
+    """The soundbar as a media player."""
 
     _attr_supported_features = (
         MediaPlayerEntityFeature.SELECT_SOUND_MODE
@@ -32,168 +34,64 @@ class YamahaMediaPlayer(MediaPlayerEntity):
         | MediaPlayerEntityFeature.SELECT_SOURCE
     )
     _attr_device_class = MediaPlayerDeviceClass.SPEAKER
-    _attr_has_entity_name = True
     _attr_name = None
+    _attr_source_list = sorted(SOURCES.values())
+    _attr_sound_mode_list = sorted(SOUND_MODES.values())
 
-    def __init__(self, hass, config):
-        _LOGGER.info("Initializing Yamaha mediaplayer")
-        self.hass = hass
-        self._macAdress = config.data["mac_adress"]
-        self._device_id = config.entry_id
-        self._name = config.data[CONF_NAME]
-        self._service_name = config.data[CONF_NAME]
-        self._pollingAuto = config.data["polling_auto"]
-        self._state = STATE_OFF
-        self._status = "unint"
-        self._type = "media_player"
-        self._power = None
-        self._current_source = None
-        self._volume = 0
-        self._sound_mode = None
-        self._muted = False
-
-    # Run when added to HASS TO LOAD SOURCES
-    async def async_added_to_hass(self):
-        """Run when entity about to be added."""
-        await super().async_added_to_hass()
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "mediaplayer")
 
     @property
-    def name(self):
-        """Return the name of the device."""
-        return self._name
+    def state(self) -> MediaPlayerState:
+        return MediaPlayerState.ON if self.coordinator.data.power else MediaPlayerState.OFF
 
     @property
-    def state(self):
-        """Return the state of the device."""
-        return self._state
+    def source(self) -> str | None:
+        return self.coordinator.data.source
 
     @property
-    def device_id(self):
-        return self._device_id
+    def sound_mode(self) -> str | None:
+        return self.coordinator.data.sound_mode
 
     @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._device_id + "_mediaplayer"
+    def volume_level(self) -> float:
+        return self.coordinator.data.volume
 
     @property
-    def sound_mode(self):
-        """Return the sub mode of the device."""
-        return self._sound_mode
+    def is_volume_muted(self) -> bool:
+        return self.coordinator.data.muted
 
-    @property
-    def volume_level(self):
-        """Return the volume level."""
-        return self._volume
+    def _raw_volume(self) -> int:
+        return round(self.coordinator.data.volume / VOLUME_FACTOR)
 
-    @property
-    def source(self):
-        """Return the current source."""
-        return self._current_source
+    async def async_turn_on(self) -> None:
+        await self._send(["powerOn"])
 
-    @property
-    def source_list(self):
-        """List of available input sources."""
-        return sorted(DEVICE_SOURCE_TYPE)
+    async def async_turn_off(self) -> None:
+        await self._send(["powerOff"])
 
-    @property
-    def sound_mode_list(self):
-        """List of available mode."""
-        return sorted(DEVICE_SOURCE_MODE)
+    async def async_select_source(self, source: str) -> None:
+        if source not in SOURCE_COMMANDS:
+            raise ServiceValidationError(f"Unknown source: {source}")
+        await self._send([SOURCE_COMMANDS[source]])
 
-    @property
-    def is_volume_muted(self):
-        """Boolean if volume is currently muted."""
-        return self._muted
+    async def async_select_sound_mode(self, sound_mode: str) -> None:
+        if sound_mode not in SOUND_MODE_COMMANDS:
+            raise ServiceValidationError(f"Unknown sound mode: {sound_mode}")
+        await self._send([SOUND_MODE_COMMANDS[sound_mode]])
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            entry_type=DeviceEntryType.SERVICE,
-            identifiers={(SOUNDBAR_DOMAIN, self._device_id)},
-            name=self._service_name,
-            manufacturer=DEVICE_MANUFACTURER,
-            model=SOUNDBAR_DOMAIN,
-        )
+    async def async_mute_volume(self, mute: bool) -> None:
+        await self._send(["muteOn" if mute else "muteOff"])
 
-    async def async_set_volume_level(self, volume):
-        """Sets the volume level."""
-        newVolume = int((volume * 100) / 1.666)
-        command = ["volumeSet", newVolume]
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        await ble_connect.callDevice(command)
-        self._volume = volume
+    async def async_set_volume_level(self, volume: float) -> None:
+        await self._send(["volumeSet", int(volume / VOLUME_FACTOR)])
 
     async def async_volume_up(self) -> None:
-        """Volume up the media player."""
-        newVolume = int((self._volume * 100) / 1.666) + 5
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        command = ["volumeSet", newVolume]
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        await ble_connect.callDevice(command)
-        self._volume = (newVolume * 1.666) / 100
+        await self._send(["volumeSet", self._raw_volume() + VOLUME_STEP])
 
     async def async_volume_down(self) -> None:
-        """Volume up the media player."""
-        newVolume = int((self._volume * 100) / 1.666) - 5
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        command = ["volumeSet", newVolume]
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        await ble_connect.callDevice(command)
-        self._volume = (newVolume * 1.666) / 100
-
-    async def async_mute_volume(self, mute):
-        """Sets volume mute to true."""
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        if mute:
-            await ble_connect.callDevice(["muteOn"])
-        else:
-            await ble_connect.callDevice(["muteOff"])
-        self._muted = mute
-
-    async def async_select_sound_mode(self, sound_mode):
-        """Switch the sound mode of the entity."""
-        if sound_mode not in DEVICE_SOURCE_MODE:
-            _LOGGER.error("Unsupported mode")
-            return
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        await ble_connect.callDevice([sound_mode])
-        self._sound_mode = sound_mode
-
-    async def async_select_source(self, source):
-        """Select input source."""
-        if source not in DEVICE_SOURCE_TYPE:
-            _LOGGER.error("Unsupported source")
-            return
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        await ble_connect.callDevice([source])
-        self._current_source = source
-
-    async def async_turn_off(self):
-        """Turn the media player off."""
-        self._state = STATE_OFF
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        await ble_connect.callDevice(["powerOff"])
-
-    async def async_turn_on(self):
-        """Turn the media player on."""
-        self._state = STATE_ON
-        ble_connect = BleData(self, self.hass, self._macAdress)
-        await ble_connect.callDevice(["powerOn"])
-
-    async def async_update(self):
-        """Update the media player State."""
-        _LOGGER.debug("Call update on %s", self._name)
-        if self._status == "unint" or self._pollingAuto is True:
-            ble_connect = BleData(self, self.hass, self._macAdress)
-            await ble_connect.callDevice()
-            if self._status == "init":
-                if self._power is True:
-                    self._state = STATE_ON
-                else:
-                    self._state = STATE_OFF
+        await self._send(["volumeSet", max(self._raw_volume() - VOLUME_STEP, 0)])
 
 
-async def async_setup_entry(hass, config, async_add_entities):
-    async_add_entities([YamahaMediaPlayer(hass, config)])
+async def async_setup_entry(hass, entry, async_add_entities):
+    async_add_entities([YamahaMediaPlayer(entry.runtime_data)])

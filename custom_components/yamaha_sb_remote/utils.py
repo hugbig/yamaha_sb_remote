@@ -2,21 +2,13 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
-LED_val = ["Bright", "Dim", "Off"]
-Subwoofer = {0:-4,4:-3,8:-2,12:-1,16:0,20:1,24:2,28:3,32:4}
-Style_val = {3:"Movie",10:"Standard",12:"Game"}
-Input_val={5:"Bluetooth",7:"TV",10:"Optical",12:"Analog"}
 
-def create_command_code(command, device=False):
+def create_command_code(command):
     if len(command) == 1: #single action type
         command = command[0]
         if command == 'handshake': data = bytearray([0x01,0x48,0x54,0x54,0x20,0x43,0x6f,0x6e,0x74])
         elif command == 'powerOn': data = bytearray([0x40,0x78,0x7e])
         elif command == 'powerOff': data = bytearray([0x40,0x78,0x7f])
-        elif command == 'powerToggle':
-            if device._power == True: return create_command_code(['powerOff'])
-            else: return create_command_code(['powerOn'])
-        elif command == 'Bluetooth': data = bytearray([0x40,0x78,0x29])
         elif command == 'TV': data = bytearray([0x40,0x78,0xdf])
         elif command == 'Optical': data = bytearray([0x40,0x78,0x49])
         elif command == 'Analog': data = bytearray([0x40,0x78,0xd1])
@@ -24,10 +16,6 @@ def create_command_code(command, device=False):
         elif command == 'subDown': data = bytearray([0x40,0x78,0x4d])
         elif command == 'muteOn': data = bytearray([0x40,0x7e,0xa2])
         elif command == 'muteOff': data = bytearray([0x40,0x7e,0xa3])
-        elif command == 'muteToggle':
-            if device._mute == True: return create_command_code(['muteOff'])
-            else: return create_command_code(['muteOn'])
-        elif command == 'Standard': data = bytearray([0x40,0x7e,0xf1])
         elif command == 'Movie': data = bytearray([0x40,0x78,0xd9])
         elif command == 'Game': data = bytearray([0x40,0x78,0xdc])
         elif command == 'clearVoiceOn': data = bytearray([0x40,0x7e,0x80])
@@ -56,12 +44,6 @@ def create_command_code(command, device=False):
     data.insert(0, 0xaa)
     data.insert(0, 0xcc)
     return bytes(data)        
-
-def checksum_int(input):
-    #checks the checksum of the data as an int expects removal of 0xCCAA but keep length byte and checksum
-    input = input.to_bytes(len(hex(input)), 'big')
-    return checksum_byte(input)
-
 
 def checksum_byte(input):
     #checks the checksum of the data as a byte array (two's complement of the sum from the length byte)
@@ -128,32 +110,3 @@ def interpret_message(val):
             else: "Unknown message: 0x" + (val.hex())
             return "Style Message, [Surround " + surround_string + "][Style " + style_string + "][Clear Voice " + voice_string + "][Bass Extension " + bass_string + "]"
     return "Unknown message: 0x" + (val.hex())
-
-def set_by_hex(data, device): 
-    _LOGGER.debug(hex(data))
-    if (data >> 104 != 0xccaa0e0500):
-        _LOGGER.warning("Missing expected 0xccaa0e0500 at start of data")
-    if (data >> 40) & 16777215 != 0x202000:
-        _LOGGER.warning("Missing expected 0x202000 in data")
-    cleaned_data = data & (0x10 ** 32 - 1) #strip 0xCCAA given fixed length
-    if not checksum_int(cleaned_data):
-        _LOGGER.warning("Bad checksum in data")
-    device._status = "init"
-    if device._type == "media_player" :
-        device._power = bool((data >> 96) & 1)
-        device._current_source = Input_val[(data >> 88) & 0xff]
-        device._muted  = bool((data >> 80) & 1)
-        volume = (data >> 72) & 0xff
-        device._volume = (volume * 1.666) / 100
-        device._sound_mode = Style_val[(data >> 24) & 0xff]
-    elif device._type == "clear_voice" :
-        device._power = bool((data >> 18) & 1)
-    elif device._type == "bass_ext" :
-        device._power = bool((data >> 21) & 1)
-    elif device._type == "subwoofer" :  
-        device._sub = Subwoofer[(data >> 64) & 0xff]
-    elif device._type == "led" :  
-        device._led = LED_val[(data >> 8) & 0x3]    
-    else :
-        _LOGGER.warning("Invalid device type")    
-    return device

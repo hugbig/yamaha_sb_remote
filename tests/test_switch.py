@@ -3,16 +3,13 @@
 import pytest
 from homeassistant.const import STATE_OFF, STATE_ON
 
-from tests.conftest import refresh, setup_integration
+from tests.conftest import setup_integration
 
 
 @pytest.fixture
 async def ids(hass, config_entry, fake_bar):
     fake_bar.state.clear_voice = True
-    ids = await setup_integration(hass, config_entry)
-    await refresh(hass, ids["clear_voice"])
-    await refresh(hass, ids["bass_ext"])
-    return ids
+    return await setup_integration(hass, config_entry)
 
 
 async def test_initial_read(hass, ids):

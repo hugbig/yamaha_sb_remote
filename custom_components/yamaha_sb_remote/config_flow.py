@@ -1,6 +1,5 @@
 """Config Flow."""
 
-from custom_components.yamaha_sb_remote import DOMAIN as SOUNDBAR_DOMAIN
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow
@@ -8,8 +7,8 @@ from homeassistant.const import CONF_NAME
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
-# DEFAULTS
-DEFAULT_NAME = "Yamaha SR-C20A"
+from .const import DEFAULT_NAME, DOMAIN as SOUNDBAR_DOMAIN
+
 
 
 class ConfigFlow(ConfigFlow, domain=SOUNDBAR_DOMAIN):
