@@ -1,6 +1,13 @@
-[![Validate](https://github.com/hugbig/yamaha_sb_remote/actions/workflows/validate.yaml/badge.svg)](https://github.com/hugbig/yamaha_sb_remote/actions/workflows/validate.yaml)
+<h1 align="center">Yamaha soundbar (Bluetooth) for Home Assistant</h1>
 
-# Yamaha soundbar (Bluetooth) for Home Assistant
+<p align="center">
+  <a href="https://github.com/hugbig/yamaha_sb_remote/actions/workflows/tests.yml"><img src="https://github.com/hugbig/yamaha_sb_remote/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/hugbig/yamaha_sb_remote/actions/workflows/validate.yaml"><img src="https://github.com/hugbig/yamaha_sb_remote/actions/workflows/validate.yaml/badge.svg" alt="Validate"></a>
+  <a href="https://github.com/hugbig/yamaha_sb_remote/releases/latest"><img src="https://img.shields.io/github/v/release/hugbig/yamaha_sb_remote" alt="Latest release"></a>
+  <a href="https://hacs.xyz"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5" alt="HACS Custom"></a>
+  <img src="https://img.shields.io/badge/Home%20Assistant-2024.11%2B-41BDF5" alt="Home Assistant 2024.11+">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/hugbig/yamaha_sb_remote" alt="License: MIT"></a>
+</p>
 
 Control a Yamaha soundbar from Home Assistant over Bluetooth Low Energy, using the same protocol as
 the Yamaha *Sound Bar Remote* app. It works with a local Bluetooth adapter or an ESPHome Bluetooth
@@ -30,7 +37,7 @@ to report yours.
 
 ## Requirements
 
-- Home Assistant 2023.12 or later.
+- Home Assistant 2024.11 or later.
 - A Bluetooth adapter on the Home Assistant host, or an
   [ESPHome Bluetooth proxy](https://esphome.io/projects/?type=bluetooth), within range of the
   soundbar. The proxy must allow active connections (`bluetooth_proxy: active: true`).
@@ -56,8 +63,11 @@ in:
 
 - **Mac Adress**: the soundbar's Bluetooth MAC address, for example `AA:BB:CC:DD:EE:FF`;
 - **Name**: the device name in Home Assistant;
-- **Auto polling for update**: when on, the entities read the soundbar's state regularly. When
-  off, they read it once at startup and then assume that their own commands worked.
+- **Auto polling for update**: when on, the state is read every 30 seconds, so changes made with
+  the Yamaha remote or app show up. When off, it is read at startup and after each command.
+
+All five entities share one Bluetooth connection per update. If the soundbar does not answer, the
+entities become unavailable and the integration tries again every 60 seconds.
 
 ## Troubleshooting
 
